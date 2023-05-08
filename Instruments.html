@@ -1,2 +1,256 @@
-aapl
-sava
+<!DOCTYPE html>
+<html lang="ru" ppp-app-type="desktop">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      let darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const savedDarkMode = localStorage.getItem('ppp-dark-mode');
+
+      if (typeof savedDarkMode === 'string') {
+        if (savedDarkMode === '0') darkMode = false;
+        else if (savedDarkMode === '1') darkMode = true;
+      } else {
+        localStorage.setItem('ppp-dark-mode', '2');
+      }
+
+      let criticalCss = `:root {
+        --critical-default-color: #FFFFFF;
+        --critical-default-inverse-color: #1E2C39;
+        --critical-border-color: #3C5469;
+        --success-color: #0BA264;
+        --danger-color: #BB3340;
+      }`;
+
+      if (darkMode) {
+        criticalCss = `:root {
+          --critical-default-color: #1E2C39;
+          --critical-default-inverse-color: #FFFFFF;
+          --critical-border-color: #3C5469;
+          --success-color: #0BA264;
+          --danger-color: #BB3340;
+        }`;
+      }
+
+      document.head.insertAdjacentHTML(
+        'afterbegin',
+        `<style>
+          ${
+            localStorage.getItem(
+              `ppp-${darkMode ? 'dark' : 'light'}-critical-css`
+            ) || criticalCss
+          }
+        </style>`
+      );
+    </script>
+    <style>
+      *:not(:defined) {
+        visibility: hidden;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        position: relative;
+        font-smooth: always;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        height: 100%;
+        overflow: auto;
+        scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.3);
+        scrollbar-width: thin;
+        background-color: var(--critical-default-color);
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        width: 100%;
+      }
+
+      input.service-machine-url {
+        display: flex;
+        margin-top: 16px;
+        box-sizing: border-box;
+        width: 320px;
+        height: 36px;
+        border-radius: 4px;
+        padding: 0 12px;
+        font-size: 14px;
+        font-weight: normal;
+        z-index: 1;
+        outline: none;
+        color: var(--critical-default-inverse-color);
+        border: 1px solid var(--critical-border-color);
+        background-color: var(--critical-default-color);
+        font-family: -apple-system, BlinkMacSystemFont, Roboto, Segoe UI,
+          'Trebuchet MS', Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue,
+          Icons16, sans-serif;
+        text-transform: inherit;
+      }
+
+      .loading-text {
+        display: flex;
+        color: var(--danger-color);
+        font-size: 18px;
+        font-family: -apple-system, BlinkMacSystemFont, Roboto, Segoe UI,
+          'Trebuchet MS', Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue,
+          Icons16, sans-serif;
+        position: relative;
+        text-transform: uppercase;
+        margin-top: 32px;
+      }
+
+      .loading-text:empty {
+        display: none;
+      }
+
+      .loading-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-items: center;
+        position: absolute;
+        width: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    </style>
+    <title>PPP</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="static/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="static/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="PPP" />
+    <meta name="apple-mobile-web-app-title" content="PPP Console" />
+    <meta name="msapplication-TileColor" content="#001E2B" />
+    <meta name="theme-color" content="#001E2B" />
+    <meta name="msapplication-navbutton-color" content="#001E2B" />
+    <meta name="msapplication-starturl" content="/" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+  </head>
+  <template id="ppp-loader">
+    <style>
+      :host {
+        width: 77px;
+        position: relative;
+        height: 12px;
+        display: flex;
+      }
+
+      .loader-holder {
+        display: inline-flex;
+        position: relative;
+        height: 100%;
+        width: 100%;
+      }
+
+      .loader-holder div {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1px solid var(--critical-border-color);
+        background-color: var(--success-color);
+        animation-timing-function: cubic-bezier(0, 1, 1, 0);
+      }
+
+      .loader-holder div:nth-child(1) {
+        left: 8px;
+        animation: loader-holder1 0.3s infinite;
+      }
+
+      .loader-holder div:nth-child(2) {
+        left: 8px;
+        animation: loader-holder2 0.3s infinite;
+      }
+
+      .loader-holder div:nth-child(3) {
+        left: 32px;
+        animation: loader-holder2 0.3s infinite;
+      }
+
+      .loader-holder div:nth-child(4) {
+        left: 56px;
+        animation: loader-holder3 0.3s infinite;
+      }
+
+      :host(.error) .loader-holder div {
+        background-color: var(--danger-color);
+        animation: none;
+      }
+
+      @keyframes loader-holder1 {
+        0% {
+          transform: scale(0);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes loader-holder2 {
+        0% {
+          transform: translate(0, 0);
+        }
+        100% {
+          transform: translate(24px, 0);
+        }
+      }
+
+      @keyframes loader-holder3 {
+        0% {
+          transform: scale(1);
+        }
+        100% {
+          transform: scale(0);
+        }
+      }
+    </style>
+    <div class="loader-holder">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </template>
+  <script type="module" src="main.js"></script>
+  <body>
+    <div class="loading-controls">
+      <ppp-loader class="splashscreen-loader"></ppp-loader>
+      <div class="loading-text"></div>
+      <input
+        hidden
+        class="service-machine-url"
+        placeholder="https://service-machine.url"
+      />
+    </div>
+    <ppp-design-system-canvas>
+      <div
+        class="toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-relevant="all"
+      >
+        <ppp-toast hidden dismissible></ppp-toast>
+      </div>
+    </ppp-design-system-canvas>
+  </body>
+  <script async src="./vendor/polyglot.min.js"></script>
+</html>
